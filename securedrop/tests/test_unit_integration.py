@@ -46,7 +46,8 @@ class TestIntegration(unittest.TestCase):
 
     def _wait_for(self, function_with_assertion, timeout=5):
         """Polling wait for an arbitrary assertion."""
-        # Thanks to http://chimera.labs.oreilly.com/books/1234000000754/ch20.html#_a_common_selenium_problem_race_conditions
+        # Thanks to
+        # http://chimera.labs.oreilly.com/books/1234000000754/ch20.html#_a_common_selenium_problem_race_conditions
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
@@ -353,7 +354,8 @@ class TestIntegration(unittest.TestCase):
         # Download the reply and verify that it can be decrypted with the
         # journalist's key as well as the source's reply key
         sid = soup.select('input[name="sid"]')[0]['value']
-        checkbox_values = [soup.select('input[name="doc_names_selected"]')[1]['value']]
+        checkbox_values = [
+            soup.select('input[name="doc_names_selected"]')[1]['value']]
         rv = self.journalist_app.post('/bulk', data=dict(
             sid=sid,
             action='download',
@@ -367,7 +369,8 @@ class TestIntegration(unittest.TestCase):
         self._can_decrypt_with_key(data, crypto_util.getkey(sid), codename)
 
         # Test deleting reply on the journalist interface
-        last_reply_number = len(soup.select('input[name="doc_names_selected"]')) - 1
+        last_reply_number = len(
+            soup.select('input[name="doc_names_selected"]')) - 1
         self.helper_filenames_delete(soup, last_reply_number)
 
         with self.source_app as source_app:
@@ -385,7 +388,8 @@ class TestIntegration(unittest.TestCase):
                     "You have received a reply. For your security, please delete all replies when you're done with them.", rv.data)
                 self.assertIn(test_reply, rv.data)
                 soup = BeautifulSoup(rv.data)
-                msgid = soup.select('form.message > input[name="reply_filename"]')[0]['value']
+                msgid = soup.select(
+                    'form.message > input[name="reply_filename"]')[0]['value']
                 rv = source_app.post('/delete', data=dict(
                     sid=sid,
                     reply_filename=msgid
@@ -395,7 +399,11 @@ class TestIntegration(unittest.TestCase):
 
                 # Make sure the reply is deleted from the filesystem
                 self._wait_for(
-                    lambda: self.assertFalse(os.path.exists(store.path(sid, msgid)))
+                    lambda: self.assertFalse(
+                        os.path.exists(
+                            store.path(
+                                sid,
+                                msgid)))
                 )
 
                 common.logout(source_app)
@@ -462,7 +470,8 @@ class TestIntegration(unittest.TestCase):
 
         # Make sure the collections are deleted from the filesystem
         self._wait_for(
-            lambda: self.assertFalse(any([os.path.exists(store.path(sid)) for sid in checkbox_values]))
+            lambda: self.assertFalse(
+                any([os.path.exists(store.path(sid)) for sid in checkbox_values]))
         )
 
     def test_filenames(self):
@@ -482,7 +491,8 @@ class TestIntegration(unittest.TestCase):
         # test filenames and sort order
         soup = BeautifulSoup(rv.data)
         submission_filename_re = r'^{0}-[a-z0-9-_]+(-msg|-doc\.gz)\.gpg$'
-        for i, submission_link in enumerate(soup.select('ul#submissions li a .filename')):
+        for i, submission_link in enumerate(
+                soup.select('ul#submissions li a .filename')):
             filename = str(submission_link.contents[0])
             self.assertTrue(re.match(submission_filename_re.format(i + 1),
                                      filename))
@@ -509,11 +519,14 @@ class TestIntegration(unittest.TestCase):
 
         # test filenames and sort order
         submission_filename_re = r'^{0}-[a-z0-9-_]+(-msg|-doc\.gz)\.gpg$'
-        filename = str(soup.select('ul#submissions li a .filename')[0].contents[0])
+        filename = str(
+            soup.select('ul#submissions li a .filename')[0].contents[0])
         self.assertTrue(re.match(submission_filename_re.format(1), filename))
-        filename = str(soup.select('ul#submissions li a .filename')[1].contents[0])
+        filename = str(
+            soup.select('ul#submissions li a .filename')[1].contents[0])
         self.assertTrue(re.match(submission_filename_re.format(3), filename))
-        filename = str(soup.select('ul#submissions li a .filename')[2].contents[0])
+        filename = str(
+            soup.select('ul#submissions li a .filename')[2].contents[0])
         self.assertTrue(re.match(submission_filename_re.format(4), filename))
 
     def helper_filenames_submit(self):
@@ -532,7 +545,8 @@ class TestIntegration(unittest.TestCase):
 
     def helper_filenames_delete(self, soup, i):
         sid = soup.select('input[name="sid"]')[0]['value']
-        checkbox_values = [soup.select('input[name="doc_names_selected"]')[i]['value']]
+        checkbox_values = [
+            soup.select('input[name="doc_names_selected"]')[i]['value']]
 
         # delete
         rv = self.journalist_app.post('/bulk', data=dict(
@@ -541,7 +555,9 @@ class TestIntegration(unittest.TestCase):
             doc_names_selected=checkbox_values
         ), follow_redirects=True)
         self.assertEqual(rv.status_code, 200)
-        self.assertIn("The following file has been selected for <strong>permanent deletion</strong>", rv.data)
+        self.assertIn(
+            "The following file has been selected for <strong>permanent deletion</strong>",
+            rv.data)
 
         # confirm delete
         rv = self.journalist_app.post('/bulk', data=dict(
@@ -554,7 +570,8 @@ class TestIntegration(unittest.TestCase):
 
         # Make sure the files were deleted from the filesystem
         self._wait_for(
-            lambda: self.assertFalse(any([os.path.exists(store.path(sid, doc_name)) for doc_name in checkbox_values]))
+            lambda: self.assertFalse(
+                any([os.path.exists(store.path(sid, doc_name)) for doc_name in checkbox_values]))
         )
 
 if __name__ == "__main__":

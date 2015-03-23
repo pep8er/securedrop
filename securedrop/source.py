@@ -93,10 +93,14 @@ def setup_g():
         try:
             g.source = Source.query.filter(Source.filesystem_id == g.sid).one()
         except MultipleResultsFound as e:
-            app.logger.error("Found multiple Sources when one was expected: %s" % (e,))
+            app.logger.error(
+                "Found multiple Sources when one was expected: %s" %
+                (e,))
             abort(500)
         except NoResultFound as e:
-            app.logger.error("Found no Sources when one was expected: %s" % (e,))
+            app.logger.error(
+                "Found no Sources when one was expected: %s" %
+                (e,))
             del session['logged_in']
             del session['codename']
             return redirect(url_for('index'))
@@ -125,7 +129,8 @@ def generate_unique_codename(num_words):
     while True:
         codename = crypto_util.genrandomid(num_words)
         sid = crypto_util.hash_codename(codename)  # scrypt (slow)
-        matching_sources = Source.query.filter(Source.filesystem_id == sid).all()
+        matching_sources = Source.query.filter(
+            Source.filesystem_id == sid).all()
         if len(matching_sources) == 0:
             return codename
 
@@ -147,7 +152,8 @@ def generate():
 
     codename = generate_unique_codename(num_words)
     session['codename'] = codename
-    return render_template('generate.html', codename=codename, num_words=num_words)
+    return render_template(
+        'generate.html', codename=codename, num_words=num_words)
 
 
 @app.route('/create', methods=['POST'])
@@ -159,7 +165,9 @@ def create():
     try:
         db_session.commit()
     except IntegrityError as e:
-        app.logger.error("Attempt to create a source with duplicate codename: %s" % (e,))
+        app.logger.error(
+            "Attempt to create a source with duplicate codename: %s" %
+            (e,))
     else:
         os.mkdir(store.path(sid))
 
@@ -196,11 +204,14 @@ def lookup():
     for reply in g.source.replies:
         reply_path = store.path(g.sid, reply.filename)
         try:
-            reply.decrypted = crypto_util.decrypt(g.codename, file(reply_path).read()).decode('utf-8')
+            reply.decrypted = crypto_util.decrypt(
+                g.codename,
+                file(reply_path).read()).decode('utf-8')
         except UnicodeDecodeError:
             app.logger.error("Could not decode reply %s" % reply.filename)
         else:
-            reply.date = datetime.utcfromtimestamp(os.stat(reply_path).st_mtime)
+            reply.date = datetime.utcfromtimestamp(
+                os.stat(reply_path).st_mtime)
             replies.append(reply)
 
     # Sort the replies by date
@@ -229,7 +240,9 @@ def normalize_timestamps(sid):
         args.extend(sub_paths[:-1])
         rc = subprocess.call(args)
         if rc != 0:
-            app.logger.warning("Couldn't normalize submission timestamps (touch exited with %d)" % rc)
+            app.logger.warning(
+                "Couldn't normalize submission timestamps (touch exited with %d)" %
+                rc)
 
 
 @app.route('/submit', methods=('POST',))
@@ -250,11 +263,11 @@ def submit():
     if msg:
         g.source.interaction_count += 1
         fnames.append(store.save_message_submission(g.sid, g.source.interaction_count,
-                      journalist_filename, msg))
+                                                    journalist_filename, msg))
     if fh:
         g.source.interaction_count += 1
         fnames.append(store.save_file_submission(g.sid, g.source.interaction_count,
-                      journalist_filename, fh.filename, fh.stream))
+                                                 journalist_filename, fh.filename, fh.stream))
 
     if first_submission:
         flash("Thanks for submitting something to SecureDrop! Please check back later for replies.",
@@ -274,7 +287,8 @@ def submit():
         g.source.pending = False
 
         # Generate a keypair now, if there's enough entropy (issue #303)
-        entropy_avail = int(open('/proc/sys/kernel/random/entropy_avail').read())
+        entropy_avail = int(
+            open('/proc/sys/kernel/random/entropy_avail').read())
         if entropy_avail >= 2400:
             async_genkey(g.sid, g.codename)
 
@@ -288,7 +302,8 @@ def submit():
 @app.route('/delete', methods=('POST',))
 @login_required
 def delete():
-    query = Reply.query.filter(Reply.filename == request.form['reply_filename'])
+    query = Reply.query.filter(
+        Reply.filename == request.form['reply_filename'])
     reply = get_one_or_else(query, app.logger, abort)
     store.secure_unlink(store.path(g.sid, reply.filename))
     db_session.delete(reply)

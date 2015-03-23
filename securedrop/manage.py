@@ -159,15 +159,20 @@ def add_admin():
     otp_secret = None
     if hotp_input.lower() == "y" or hotp_input.lower() == "yes":
         while True:
-            otp_secret = raw_input("Please configure your YubiKey and enter the secret: ")
+            otp_secret = raw_input(
+                "Please configure your YubiKey and enter the secret: ")
             if otp_secret:
                 break
 
-    admin = Journalist(username=username, password=password, is_admin=True, otp_secret=otp_secret)
+    admin = Journalist(
+        username=username,
+        password=password,
+        is_admin=True,
+        otp_secret=otp_secret)
     try:
         db_session.add(admin)
         db_session.commit()
-    except Exception, e:
+    except Exception as e:
         if "username is not unique" in str(e):
             print "ERROR: That username is already taken!"
         else:
@@ -180,7 +185,9 @@ def add_admin():
             print
             print "Scan the QR code below with Google Authenticator:"
             print
-            uri = admin.totp.provisioning_uri(username, issuer_name="SecureDrop")
+            uri = admin.totp.provisioning_uri(
+                username,
+                issuer_name="SecureDrop")
             qr = qrcode.QRCode()
             qr.add_data(uri)
             qr.print_ascii(tty=sys.stdout.isatty())
@@ -228,7 +235,15 @@ def clean_tmp():
 
 
 def main():
-    valid_cmds = ["start", "stop", "test_unit", "test", "restart", "reset", "add_admin", "clean_tmp"]
+    valid_cmds = [
+        "start",
+        "stop",
+        "test_unit",
+        "test",
+        "restart",
+        "reset",
+        "add_admin",
+        "clean_tmp"]
     help_str = "./manage.py {{{0}}}".format(','.join(valid_cmds))
 
     if len(sys.argv) != 2 or sys.argv[1] not in valid_cmds:
